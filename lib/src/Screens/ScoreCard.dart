@@ -1,498 +1,485 @@
 import 'package:flutter/material.dart';
+import '../Providers/score_card_logic.dart';
+import '../CommonParameters/AppBackGround1/Appbg2.dart';
+import '../widgets/buttons.dart';
+import '../widgets/Circular_button.dart';
 
+class ScoreCardUI extends StatefulWidget {
+  final ScoreCardLogic logic;
 
-//import 'package:scoreboard/src/Pages/Otp.dart';
-import 'package:full_app_code/src/widgets/buttons.dart';
-import 'package:full_app_code/src/CommonParameters/AppBackGround/Appbg2.dart';
-import 'package:full_app_code/src/viewmodels/ScoreController.dart';
-import 'package:provider/provider.dart';
-import 'package:full_app_code/src/viewmodels/ScoreManager.dart';
-import 'package:full_app_code/src/widgets/Circular_button.dart';
-
-class Board extends StatelessWidget {
-  const Board({super.key});
+  const ScoreCardUI({super.key, required this.logic});
 
   @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => ScoreController()),
-        ChangeNotifierProvider(create: (_) => ScoreManager()),
-      ],
-      child:BoardScreen(),
-    );
-  }
+  State<ScoreCardUI> createState() => _ScoreCardUIState();
 }
 
-
-
-class BoardScreen extends StatefulWidget {
-  const BoardScreen({super.key});
-
-  @override
-  State<BoardScreen> createState() => _BoardScreenState();
-}
-
-class _BoardScreenState extends State<BoardScreen> {
-
+class _ScoreCardUIState extends State<ScoreCardUI> {
   bool _isExtrasMenuOpen = false;
+  bool _showExtraRunsDialog = false;
+  String _extraType = '';
 
-  void _toggleExtrasMenu() => setState(() => _isExtrasMenuOpen = !_isExtrasMenuOpen);
+  void _toggleExtrasMenu() {
+    setState(() => _isExtrasMenuOpen = !_isExtrasMenuOpen);
+  }
+
+  void _handleExtra(String type) {
+    _toggleExtrasMenu();
+    if (type == 'BYE' || type == 'LB') {
+      setState(() {
+        _extraType = type;
+        _showExtraRunsDialog = true;
+      });
+    } else {
+      _processExtra(type, 0);
+    }
+  }
+
+  void _processExtra(String type, int runs) {
+    setState(() {
+      switch (type) {
+        case 'WD':
+          widget.logic.addWide(runs: 1 + runs);
+          break;
+        case 'NB':
+          widget.logic.addNoBall(battingRuns: runs);
+          break;
+        case 'BYE':
+          widget.logic.addByes(runs);
+          break;
+        case 'LB':
+          widget.logic.addLegByes(runs);
+          break;
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-
-
-    void _showExtraRunDialog(BuildContext context, String extraType) {
-      showDialog(
-        context: context,
-        builder: (context) {
-          final scoreController = context.read<ScoreController>();
-          return AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            title: Text(
-              extraType == 'NB'
-                  ? 'No Ball Scored Runs'
-                  : 'Wide Ball Scored Runs',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Select the runs scored by the batsman (extra + runs):',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 10,
-                  children: List.generate(7, (i) {
-                    return ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        shape: const CircleBorder(),
-                        padding: const EdgeInsets.all(20),
-                        backgroundColor: Colors.blueAccent.shade700,
-                      ),
-                      onPressed: () {
-                        scoreController.addExtra(extraType, i);
-                        Navigator.pop(context);
-                      },
-                      child: Text(
-                        '$i',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.white,
-                        ),
-                      ),
-                    );
-                  }),
-                ),
-              ],
-            ),
-          );
-        },
-      );
-    }
-
-
-
-
-    void _showNewBowlerDialog(BuildContext context, ScoreManager scoreManager) {
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            backgroundColor: const Color(0xFF2C2A33),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              "Over Completed",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            content: const Text(
-              "Select the next bowler to continue.",
-              style: TextStyle(color: Colors.white70),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  scoreManager.resetOver(); // Clear old over
-                  Navigator.pop(context); // Close dialog
-                },
-                child: const Text(
-                  "Continue",
-                  style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          );
-        },
-      );
-    }
-
-
-    void _showNewBatsmanDialog(BuildContext context) {
-      showDialog(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('New Batsman'),
-          content: const Text('Select the new batsman to come in.'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        ),
-      );
-    }
-
-
+    final width = size.width;
+    final height = size.height;
 
     return Scaffold(
-      body:
-      Stack(
+      body: Stack(
         children: [
-          // Gradient background
           Appbg2(),
 
           Column(
-              children: [
-                SizedBox(height: 100),
-                Center(
-                  child: Text(
-                    'Score Board',
-                    style: TextStyle(fontSize: 20, color: Colors.white),
-                  ),
+            children: [
+              SizedBox(height: height * 0.1),
+              Text(
+                'Score Board',
+                style: TextStyle(
+                    fontSize: width * 0.055,
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600),
+              ),
+              SizedBox(height: height * 0.02),
+
+              // 1. Header Card (Score, CRR, NRR)
+              _buildInfoCard(
+                size,
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    _teamStats(width),
+                    _scoreDisplay(width),
+                  ],
                 ),
-                SizedBox(height: 20,),
+              ),
+              SizedBox(height: height * 0.02),
 
-                _buildInfoCard(
-                  size,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildTeamStats(),
-                      _buildScore(context),
-                    ],
-                  ),
-                ),
+              // 2. Batsman Table Card
+              _buildDataTableCard(
+                  width, "Batsman", ["R", "B", "4s", "6s", "SR"], [
+                _buildBatsmanRow(
+                    width, widget.logic.batsman1, widget.logic.strikerIndex == 0),
+                _buildBatsmanRow(
+                    width, widget.logic.batsman2, widget.logic.strikerIndex == 1),
+              ]),
+              SizedBox(height: height * 0.01),
 
-                SizedBox(height: 30),
+              // 3. Bowler Table Card
+              _buildDataTableCard(width, "Bowler", ["O", "R", "W", "ER"], [
+                _buildBowlerRow(width, widget.logic.currentBowler),
+              ]),
+              SizedBox(height: height * 0.01),
 
-                // Empty section for further details (like batsmen, overs, etc.)
-                _buildInfoCard(size, height: 118),
+              // 4. Ball History List
+              _buildHorizontalBallHistory(width, height),
 
-                SizedBox(height: 30),
-                Consumer<ScoreManager>(
-                  builder: (context, manager, _) {
-                    return Container(
-                      width: 350,
-                      height: 60,
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Color(0xFF6E6679), Color(0xFF181719)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                        borderRadius: BorderRadius.all(Radius.circular(50)),
-                      ),
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: false, // starts from left
-                        child: Row(
-                          children: manager.ballsInOver.map((score) {
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(horizontal: 4),
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeOut,
-                                child: CircleAvatar(
-                                  radius: 16,
-                                  backgroundColor: Colors.white.withOpacity(0.9),
-                                  child: Text(
-                                    score,
-                                    style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        color: Colors.black,
-                                        fontSize: 14),
-                                  ),
-                                ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-
-                SizedBox(height: 30,),
-
-                Container(
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-
-                      Padding(
-                        padding:  EdgeInsets.only(top: 100.0),
-                        child: GradientButton(
-                          label: '4',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(4);
-                            scoreManager.addBallScore('4', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 75.0),
-                        child: GradientButton(
-                          label: '3',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(3);
-                            scoreManager.addBallScore('3', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 50.0),
-                        child: GradientButton(
-                          label: '1',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(1);
-                            scoreManager.addBallScore('1', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 25.0),
-                        child: GradientButton(
-                          label: '0',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(0);
-                            scoreManager.addBallScore('*', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 50.0),
-                        child: GradientButton(
-                          label: '2',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(2);
-                            scoreManager.addBallScore('2', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 75),
-                        child: GradientButton(
-                          label: '5',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(5);
-                            scoreManager.addBallScore('5', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-                        ),
-                      ),
-
-                      Padding(
-                        padding: const EdgeInsets.only(top: 100),
-                        child: GradientButton(
-                          label: '6',
-                          onPressed: () {
-                            final scoreController = context.read<ScoreController>();
-                            final scoreManager = context.read<ScoreManager>();
-                            scoreController.addRuns(6);
-                            scoreManager.addBallScore('6', isLegal: true);
-                            if (scoreManager.legalBalls == 6) {
-                              Future.delayed(const Duration(milliseconds: 200), () {
-                                _showNewBowlerDialog(context, scoreManager);
-                              });
-                            }
-                          },
-                        ),
-                      )
-                    ],
-                  ),
-                ),
-
-                Center(
-                  child: GradientCircleButton(
-                    label: 'W',
-                    onPressed: () {
-                      final scoreController = context.read<ScoreController>();
-                      final scoreManager = context.read<ScoreManager>();
-
-                      // Add wicket to both controllers
-                      scoreController.addWicket(isLegal: true);
-                      scoreManager.addBallScore('W', isLegal: true, runs: 0);
-
-                      // Show new batsman dialog (if exists)
-                      _showNewBatsmanDialog(context);
-
-                      // Handle over completion
-                      if (scoreManager.legalBalls == 6) {
-                        Future.delayed(const Duration(milliseconds: 200), () {
-                          _showNewBowlerDialog(context, scoreManager);
-                        });
-                      }
-                    },
-                  ),
-                ),
-
-
-              ]
+              // 5. Score Buttons
+              const Spacer(),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _scoreButton('4', height * 0.1, 4),
+                  _scoreButton('3', height * 0.07, 3),
+                  _scoreButton('1', height * 0.04, 1),
+                  _scoreButton('0', height * 0.01, 0),
+                  _scoreButton('2', height * 0.04, 2),
+                  _scoreButton('5', height * 0.07, 5),
+                  _scoreButton('6', height * 0.1, 6),
+                ],
+              ),
+              GradientCircleButton(
+                  label: 'W',
+                  onPressed: () {
+                    setState(() => widget.logic.addWicket());
+                  }),
+            ],
           ),
 
-          // Dim overlay for extras menu
           if (_isExtrasMenuOpen)
             GestureDetector(
-              onTap: _toggleExtrasMenu,
-              child: Container(color: Colors.black.withOpacity(0.6)),
-            ),
+                onTap: _toggleExtrasMenu,
+                child: Container(color: Colors.black.withOpacity(0.6))),
 
-          // Floating Extras buttons (animated)
-          _buildAnimatedRadialButton(
-            label: 'Byes',
-            left: 20,
-            bottom: _isExtrasMenuOpen ? 180 : 20,
-            visible: _isExtrasMenuOpen,
-            onPressed: () {
-              print('Byes pressed!');
-              _toggleExtrasMenu();
-            },
-          ),
-          _buildAnimatedRadialButton(
-            label: 'Wide',
-            left: _isExtrasMenuOpen ? 90 : 20,
-            bottom: _isExtrasMenuOpen ? 100 : 20,
-            visible: _isExtrasMenuOpen,
-            onPressed: () {
-              print('Wide pressed!');
-              final scoreManager = context.read<ScoreManager>();
-              scoreManager.addBallScore('WD', isLegal: false);
-              _showExtraRunDialog(context, 'WD');
-              _toggleExtrasMenu();
-              if (scoreManager.legalBalls == 6) {
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  _showNewBowlerDialog(context, scoreManager);
-                });
-              }
-            },
-          ),
-          _buildAnimatedRadialButton(
-            label: 'No Ball',
-            left: _isExtrasMenuOpen ? 160 : 20,
-            bottom: 20,
-            visible: _isExtrasMenuOpen,
-            onPressed: () {
-              print('No Ball pressed!');
-              final scoreManager = context.read<ScoreManager>();
-              scoreManager.addBallScore('NB', isLegal: false);
-              _showExtraRunDialog(context, 'NB');
-              _toggleExtrasMenu();
-              if (scoreManager.legalBalls == 6) {
-                Future.delayed(const Duration(milliseconds: 200), () {
-                  _showNewBowlerDialog(context, scoreManager);
-                });
-              }
-            },
-          ),
+          _extraButton('Byes', 'BYE', width, height, 0.22, 0.05),
+          _extraButton('Leg Byes', 'LB', width, height, 0.14, 0.25),
+          _extraButton('Wide', 'WD', width, height, 0.06, 0.45),
+          _extraButton('No Ball', 'NB', width, height, 0.01, 0.65),
 
-          // Floating buttons (Extras / Undo)
-          Positioned(
-            left: 20,
-            bottom: 20,
-            child: FloatingActionButton(
-              onPressed: _toggleExtrasMenu,
-              backgroundColor: Colors.white,
-              shape:  CircleBorder(),
-              child:  Text(
-                'Extras',
-                style: TextStyle(
-                    color: Color(0xFF2A313B), fontWeight: FontWeight.bold, fontSize: 12),
+          _buildPositionedFAB(
+              width, height, Alignment.bottomLeft, 'Extras', _toggleExtrasMenu, null),
+          _buildPositionedFAB(width, height, Alignment.bottomRight, 'Undo', () {
+            setState(() => widget.logic.undoLastAction());
+          }, Icons.undo),
+
+          // Extra Runs Dialog
+          if (_showExtraRunsDialog) _buildExtraRunsDialog(width, height),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExtraRunsDialog(double width, double height) {
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: () => setState(() => _showExtraRunsDialog = false),
+        child: Container(
+          color: Colors.black.withOpacity(0.7),
+          child: Center(
+            child: Container(
+              width: width * 0.8,
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1E2126),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    _extraType == 'BYE' ? 'Byes Runs' : 'Leg Byes Runs',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      for (int i = 1; i <= 4; i++)
+                        ElevatedButton(
+                          onPressed: () {
+                            _processExtra(_extraType, i);
+                            setState(() => _showExtraRunsDialog = false);
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            shape: const CircleBorder(),
+                            padding: const EdgeInsets.all(20),
+                          ),
+                          child: Text(
+                            '$i',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
 
+  Widget _buildDataTableCard(
+      double width, String header, List<String> columns, List<Widget> rows) {
+    return Container(
+      width: width * 0.9,
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E2126),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            decoration: const BoxDecoration(
+              color: Color(0xFF2A2E35),
+              borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(20), topRight: Radius.circular(20)),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                    flex: 3,
+                    child: Text(header,
+                        style: const TextStyle(
+                            color: Colors.white, fontWeight: FontWeight.bold))),
+                ...columns.map((col) => Expanded(
+                  child: Text(col,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.white70, fontSize: 12)),
+                )),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Column(children: rows),
+          ),
+        ],
+      ),
+    );
+  }
 
+  Widget _buildBatsmanRow(
+      double width, Map<String, dynamic> data, bool isOnStrike) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+              flex: 3,
+              child: Text("${data['name']}${isOnStrike ? '*' : ''}",
+                  style: TextStyle(
+                      color: isOnStrike ? Colors.white : Colors.white70,
+                      fontWeight:
+                      isOnStrike ? FontWeight.bold : FontWeight.normal))),
+          Expanded(
+              child: Text("${data['runs']}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+              child: Text("${data['balls']}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+              child: Text("${data['fours']}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+              child: Text("${data['sixes']}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+            child: Text(
+              (data['sr'] as num).toStringAsFixed(2),
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: Colors.white70),
+            ),
+          )
+        ],
+      ),
+    );
+  }
 
-          Positioned(
-            right: 20,
-            bottom: 20,
-            child: FloatingActionButton(
-              onPressed: () => print('Undo pressed!'),
-              backgroundColor: Colors.white,
-              shape: CircleBorder(),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children:  [
-                  Icon(Icons.undo, color: Color(0xFF2A313B), size: 20),
-                  Text(
-                    'Undo',
-                    style: TextStyle(
-                        color: Color(0xFF2A313B),
-                        fontWeight: FontWeight.bold,
-                        fontSize: 10),
-                  ),
-                ],
+  Widget _buildBowlerRow(double width, Map<String, dynamic> data) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Row(
+        children: [
+          Expanded(
+              flex: 3,
+              child: Text("${data['name']}",
+                  style: const TextStyle(color: Colors.white))),
+          Expanded(
+              child: Text("${widget.logic.overs}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+              child: Text("${widget.logic.runsConceded}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+              child: Text("${widget.logic.wicketsTaken}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+          Expanded(
+              child: Text("${widget.logic.economyRate.toStringAsFixed(2)}",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: Colors.white70))),
+        ],
+      ),
+    );
+  }
+
+  Widget _teamStats(double width) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('IND',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: width * 0.08,
+                fontWeight: FontWeight.w400)),
+        Text(
+            'Extras: ${widget.logic.wides + widget.logic.noBalls + widget.logic.byes + widget.logic.legByes}',
+            style: const TextStyle(color: Colors.white70, fontSize: 13)),
+        Text('Overs: ${widget.logic.overs}',
+            style: const TextStyle(color: Colors.white70, fontSize: 13)),
+      ],
+    );
+  }
+
+  Widget _scoreDisplay(double width) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text('${widget.logic.totalRuns}-${widget.logic.wickets}',
+            style: TextStyle(
+                color: Colors.white,
+                fontSize: width * 0.1,
+                fontWeight: FontWeight.w400)),
+        Text('(${widget.logic.overs})',
+            style: const TextStyle(color: Colors.white70, fontSize: 16)),
+      ],
+    );
+  }
+
+  Widget _buildInfoCard(Size size, Widget child, {double height = 0}) {
+    return Container(
+      width: size.width * 0.9,
+      height: height == 0 ? size.height * 0.15 : height,
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: BoxDecoration(
+          color: const Color(0xFF1E2126),
+          borderRadius: BorderRadius.circular(25)),
+      child: child,
+    );
+  }
+
+  Widget _buildPositionedFAB(double width, double height, Alignment align,
+      String label, VoidCallback press, IconData? icon) {
+    return Positioned(
+      left: align == Alignment.bottomLeft ? width * 0.05 : null,
+      right: align == Alignment.bottomRight ? width * 0.05 : null,
+      bottom: height * 0.03,
+      child: SizedBox(
+        width: width * 0.12,
+        height: width * 0.12,
+        child: FloatingActionButton(
+          heroTag: label,
+          onPressed: press,
+          backgroundColor: Colors.white,
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+          child: icon != null
+              ? Icon(icon, color: const Color(0xFF2A313B))
+              : Text(label,
+              style: const TextStyle(
+                  color: Color(0xFF2A313B),
+                  fontWeight: FontWeight.bold,
+                  fontSize: 10)),
+        ),
+      ),
+    );
+  }
+
+  Widget _scoreButton(String label, double top, int run) {
+    return Padding(
+        padding: EdgeInsets.only(top: top),
+        child: GradientButton(
+            label: label,
+            onPressed: () {
+              setState(() => widget.logic.addRuns(run));
+            }));
+  }
+
+  Widget _extraButton(String label, String type, double width, double height,
+      double bottom, double left) {
+    return AnimatedPositioned(
+      duration: const Duration(milliseconds: 300),
+      left: _isExtrasMenuOpen ? width * left : width * 0.05,
+      bottom: _isExtrasMenuOpen ? height * bottom : height * 0.03,
+      child: AnimatedOpacity(
+        duration: const Duration(milliseconds: 300),
+        opacity: _isExtrasMenuOpen ? 1 : 0,
+        child: Visibility(
+          visible: _isExtrasMenuOpen,
+          child: ElevatedButton(
+            onPressed: () => _handleExtra(type),
+            style: ElevatedButton.styleFrom(
+                shape: const CircleBorder(),
+                backgroundColor: Colors.blueAccent,
+                padding: const EdgeInsets.all(16)),
+            child: Text(label,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10)),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHorizontalBallHistory(double width, double height) {
+    return Container(
+      width: width * 0.9,
+      height: height * 0.06,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF1E2126), Color(0xFF2A2E35)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(15),
+      ),
+      child: Row(
+        children: [
+          const Text(
+            "OVER",
+            style: TextStyle(
+              color: Colors.white70,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const VerticalDivider(
+              color: Colors.white24, indent: 10, endIndent: 10, width: 20),
+          Expanded(
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              reverse: true,
+              child: Row(
+                children: widget.logic.ballHistory.isEmpty
+                    ? [
+                  const Text("Waiting for delivery...",
+                      style:
+                      TextStyle(color: Colors.white38, fontSize: 12))
+                ]
+                    : widget.logic.ballHistory.map((ball) {
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8.0),
+                    child: _buildBallIcon(ball, width),
+                  );
+                }).toList(),
               ),
             ),
           ),
@@ -501,118 +488,39 @@ class _BoardScreenState extends State<BoardScreen> {
     );
   }
 
-  // Helper widgets
-  Widget _buildInfoCard(Size size, {Widget? child, double height = 87}) {
-    return Center(
-      child: Container(
-        width: size.width * 0.9,
-        height: height+4,
-        decoration: BoxDecoration(
-          color: const Color(0xFF2A313B),
-          borderRadius: BorderRadius.circular(20),
-        ),
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        child: child,
+  Widget _buildBallIcon(String ball, double width) {
+    Color ballColor;
+    if (ball == 'W') {
+      ballColor = Colors.redAccent;
+    } else if (ball == '4' || ball == '6') {
+      ballColor = Colors.greenAccent;
+    } else if (ball.contains('WD') ||
+        ball.contains('NB') ||
+        ball.contains('B+') ||
+        ball.contains('LB+')) {
+      ballColor = Colors.amberAccent;
+    } else {
+      ballColor = Colors.white;
+    }
+
+    return Container(
+      width: width * 0.09,
+      height: width * 0.09,
+      decoration: BoxDecoration(
+        color: ballColor.withOpacity(0.10),
+        shape: BoxShape.circle,
+        border: Border.all(color: ballColor.withOpacity(0.6), width: 0.5),
       ),
-    );
-  }
-
-  Widget _buildTeamStats() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        Padding(
-          padding: EdgeInsets.only(left: 20),
-          child: Text('IND', style: TextStyle(color: Colors.white, fontSize: 22)),
-        ),
-        SizedBox(height: 4),
-        Text('CRR : 300.00', style: TextStyle(color: Colors.white, fontSize: 12)),
-        SizedBox(height: 2,width: 2,),
-        Text('NRR : 7.09', style: TextStyle(color: Colors.white, fontSize: 12)),
-      ],
-    );
-  }
-
-  Widget _buildScore(BuildContext context) {
-    final scoreController = context.watch<ScoreController>();
-    final scoreManager = context.watch<ScoreManager>();
-
-    // Combine runs from both sources
-    final totalScore = scoreController.runs + scoreManager.totalRuns;
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          '${scoreController.runs}-${scoreController.wickets}',
-          style: const TextStyle(color: Colors.white, fontSize: 22),
-        ),
-        const SizedBox(height: 2),
-        Text(
-          '(${scoreController.overs})',
-          style: const TextStyle(color: Colors.white, fontSize: 12),
-        ),
-      ],
-    );
-  }
-
-
-  Widget _buildAnimatedRadialButton({
-    required String label,
-    required double left,
-    required double bottom,
-    required bool visible,
-    required VoidCallback onPressed,
-  }) {
-    return AnimatedPositioned(
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-      left: left,
-      bottom: bottom,
-      child: AnimatedOpacity(
-        duration: const Duration(milliseconds: 300),
-        opacity: visible ? 1.0 : 0.0,
-        child: Visibility(
-          visible: visible,
-          child: ElevatedButton(
-            onPressed: onPressed,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.blueAccent,
-              shape: const CircleBorder(),
-              padding: const EdgeInsets.all(16),
-            ),
-            child: Text(
-              label,
-              style: const TextStyle(
-                  color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-            ),
+      child: Center(
+        child: Text(
+          ball,
+          style: TextStyle(
+            color: ballColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
           ),
         ),
       ),
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

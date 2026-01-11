@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:full_app_code/src/Screens/ScoreCard.dart';
+import 'package:full_app_code/src/Providers/score_card_logic.dart';
+
 class SelectPlayersPage extends StatefulWidget {
   @override
   _SelectPlayersPageState createState() => _SelectPlayersPageState();
@@ -11,14 +13,14 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
   String? selectedBowler;
 
   List<String> players = [
-    'Player 1',
-    'Player 2',
-    'Player 3',
-    'Player 4',
-    'Player 5',
+    'Virat Kohli',
+    'MS Dhoni',
+    'Rohit Sharma',
+    'KL Rahul',
+    'Hardik Pandya',
   ];
 
-  List<String> bowlers = ['Bowler 1', 'Bowler 2', 'Bowler 3'];
+  List<String> bowlers = ['Starc', 'Bumrah', 'Shami'];
 
   @override
   Widget build(BuildContext context) {
@@ -40,8 +42,7 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
             physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight:
-                    screenHeight -
+                minHeight: screenHeight -
                     MediaQuery.of(context).padding.top -
                     MediaQuery.of(context).padding.bottom,
               ),
@@ -80,7 +81,6 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                             ],
                           ),
                         ),
-
                         Row(
                           mainAxisSize: MainAxisSize.min,
                           children: const [
@@ -117,10 +117,13 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                         // Back arrow + title
                         Row(
                           children: [
-                            const Icon(
-                              Icons.arrow_back,
-                              color: Colors.white,
-                              size: 20,
+                            GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Expanded(
@@ -220,19 +223,80 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                                     ),
                                   ),
                                   onPressed: () {
-                                    // Proceed logic
-                                    Navigator.push(context, MaterialPageRoute(builder: (context)=>Board()));
+                                    // Validation
+                                    if (selectedStriker == null ||
+                                        selectedNonStriker == null ||
+                                        selectedBowler == null) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "Please select all players!"),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                      return;
+                                    }
 
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(
-                                        content: Text("Proceeding to match..."),
+                                    if (selectedStriker == selectedNonStriker) {
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                          content: Text(
+                                              "Striker and Non-Striker must be different!"),
+                                          backgroundColor: Colors.redAccent,
+                                        ),
+                                      );
+                                      return;
+                                    }
+
+                                    // Create new ScoreCardLogic instance with selected players
+                                    final logic = ScoreCardLogic();
+
+                                    // Initialize batsmen
+                                    logic.batsman1 = {
+                                      'name': selectedStriker!,
+                                      'runs': 0,
+                                      'balls': 0,
+                                      'fours': 0,
+                                      'sixes': 0,
+                                      'sr': 0.0,
+                                    };
+
+                                    logic.batsman2 = {
+                                      'name': selectedNonStriker!,
+                                      'runs': 0,
+                                      'balls': 0,
+                                      'fours': 0,
+                                      'sixes': 0,
+                                      'sr': 0.0,
+                                    };
+
+                                    // Initialize bowler
+                                    logic.currentBowler = {
+                                      'name': selectedBowler!,
+                                      'overs': 0.0,
+                                      'runs': 0,
+                                      'wickets': 0,
+                                      'er': 0.0,
+                                    };
+
+                                    // Striker is batsman1
+                                    logic.strikerIndex = 0;
+
+                                    // Navigate to ScoreCard with initialized logic
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            ScoreCardUI(logic: logic),
                                       ),
                                     );
                                   },
                                   child: Row(
                                     mainAxisAlignment: MainAxisAlignment.center,
                                     crossAxisAlignment:
-                                        CrossAxisAlignment.center,
+                                    CrossAxisAlignment.center,
                                     children: [
                                       Flexible(
                                         fit: FlexFit.loose,
@@ -246,13 +310,11 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                                         ),
                                       ),
                                       const SizedBox(width: 10),
-                                      // sized image won't cause overflow
-                                      // Image.asset(
-                                      //   'assets/images/mdi_cricket.svg',
-                                      //   width: 20,
-                                      //   height: 20,
-                                      //   fit: BoxFit.contain,
-                                      // ),
+                                      const Icon(
+                                        Icons.arrow_forward,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
                                     ],
                                   ),
                                 ),
@@ -284,7 +346,6 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
       height: 44.23,
-
       decoration: BoxDecoration(
         color: Color(0xFFD9D9D9),
         borderRadius: BorderRadius.circular(10),
@@ -292,7 +353,6 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           dropdownColor: Color(0xFFD9D9D9),
-
           borderRadius: BorderRadius.circular(20),
           value: value,
           hint: Text(
@@ -309,13 +369,13 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
           items: items
               .map(
                 (player) => DropdownMenuItem<String>(
-                  value: player,
-                  child: Text(
-                    player,
-                    style: const TextStyle(color: Colors.black, fontSize: 14),
-                  ),
-                ),
-              )
+              value: player,
+              child: Text(
+                player,
+                style: const TextStyle(color: Colors.black, fontSize: 14),
+              ),
+            ),
+          )
               .toList(),
           onChanged: onChanged,
         ),

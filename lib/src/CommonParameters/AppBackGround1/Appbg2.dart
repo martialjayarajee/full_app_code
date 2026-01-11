@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 //import 'package:TURF_TOWN_/src/Pages/Otp.dart';
 import 'package:full_app_code/src/CommonParameters/AppBackGround1/Appbg1.dart';
 import 'package:full_app_code/src/Screens/ScoreCard.dart';
-
+import 'package:full_app_code/main.dart';
+import 'package:full_app_code/src/views/Home.dart';
 class Appbg2 extends StatefulWidget {
   const Appbg2({super.key});
 
@@ -39,7 +40,7 @@ class _BoardState extends State<Appbg2> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => Board()),
+                            MaterialPageRoute(builder: (context) => Home()),
                           );
                         },
                       ),

@@ -23,6 +23,7 @@ dependencies:
   provider: ^6.1.5+1
   carousel_slider: ^5.1.1
   flutter_svg: ^2.2.1
+  objectbox_flutter_libs: 5.1.0
   geolocator: ^14.0.2
   geocoding: ^4.0.0
   bluetooth_classic: ^0.0.4
