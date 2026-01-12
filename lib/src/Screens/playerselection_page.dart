@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:full_app_code/src/services/score_card_page.dart';
+import 'package:full_app_code/src/Screens/ScoreCard.dart';
 import 'package:full_app_code/src/Providers/score_card_logic.dart';
-import 'package:full_app_code/main.dart';
 
 class SelectPlayersPage extends StatefulWidget {
   @override
@@ -286,15 +285,11 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                                     logic.strikerIndex = 0;
 
                                     // Navigate to ScoreCard with initialized logic
-                                    // Import main.dart to access objectBoxDB
                                     Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                         builder: (context) =>
-                                            ScoreCardPage(
-                                              objectBoxDB: objectBoxDB,
-                                              logic: logic,
-                                            ),
+                                            ScoreCardUI(logic: logic),
                                       ),
                                     );
                                   },
