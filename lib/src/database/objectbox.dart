@@ -3,7 +3,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:objectbox/objectbox.dart';
 import 'package:full_app_code/src/database/batting_stats.dart';
 import 'package:full_app_code/src/database/bowling_stats.dart';
-import 'package:full_app_code/src/database/objectbox.g.dart';
+import 'package:full_app_code/objectbox.g.dart';
 
 class ObjectBoxDB {
   late final Store store;

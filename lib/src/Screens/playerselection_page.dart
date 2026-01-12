@@ -1,9 +1,19 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+// Ensure these imports match your actual project structure
 import 'package:full_app_code/src/services/score_card_page.dart';
 import 'package:full_app_code/src/Providers/score_card_logic.dart';
 import 'package:full_app_code/main.dart';
 
 class SelectPlayersPage extends StatefulWidget {
+  // 1. This variable accepts the device passed from BluetoothPage
+  final BluetoothDevice? device;
+
+  // 2. The constructor makes it optional (removes 'required')
+  // This ensures it works for BOTH BluetoothPage (device passed) and TeamPage (no device)
+  SelectPlayersPage({Key? key, this.device}) : super(key: key);
+
   @override
   _SelectPlayersPageState createState() => _SelectPlayersPageState();
 }
@@ -13,15 +23,58 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
   String? selectedNonStriker;
   String? selectedBowler;
 
+  // Sample data - You can replace this with real data later
   List<String> players = [
-    'Virat Kohli',
-    'MS Dhoni',
-    'Rohit Sharma',
-    'KL Rahul',
-    'Hardik Pandya',
+    'Virat Kohli', 'MS Dhoni', 'Rohit Sharma', 'KL Rahul', 'Hardik Pandya'
   ];
-
   List<String> bowlers = ['Starc', 'Bumrah', 'Shami'];
+
+  BluetoothCharacteristic? writeChar;
+  bool isReady = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Start searching for the writable service as soon as the page loads
+    _discoverServices();
+  }
+
+  Future<void> _discoverServices() async {
+    // If no device was passed (e.g. came from TeamPage), stop here.
+    if (widget.device == null) return;
+
+    try {
+      // Discover services on the connected device
+      List<BluetoothService> services = await widget.device!.discoverServices();
+
+      for (var service in services) {
+        for (var characteristic in service.characteristics) {
+          // Look for a characteristic we can write to
+          if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+            setState(() {
+              writeChar = characteristic;
+              isReady = true;
+            });
+            debugPrint("✅ Connected to Write Characteristic");
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint("❌ Error finding services: $e");
+    }
+  }
+
+  // Function to send commands to the BLE Device
+  Future<void> send(String cmd) async {
+    if (writeChar == null) return;
+    try {
+      await writeChar!.write(utf8.encode("$cmd\n"), withoutResponse: false);
+      debugPrint("Sent: $cmd");
+    } catch (e) {
+      debugPrint("Write Error: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,81 +85,45 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
         width: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF283593), Color(0xFF1A237E), Color(0xFF000000)],
+            colors: [Color(0xFF283593), Color(0xFF000000)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            stops: [0.0, 0.4, 1.0],
           ),
         ),
         child: SafeArea(
           child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: screenHeight -
-                    MediaQuery.of(context).padding.top -
-                    MediaQuery.of(context).padding.bottom,
+                minHeight: screenHeight - MediaQuery.of(context).padding.top,
               ),
               child: Column(
                 children: [
-                  // Top header section
+                  // Header
                   Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
-                    ),
+                    padding: const EdgeInsets.all(20),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Expanded(
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.end,
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                "Cricket",
-                                style: TextStyle(
-                                  fontSize: 30,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 6),
-                              Text(
-                                "Scorer",
-                                style: TextStyle(
-                                  fontSize: 23,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                            ],
-                          ),
+                        const Text(
+                            "Select Players",
+                            style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)
                         ),
+                        // Visual Indicator: Green if BLE is ready, Grey if not
                         Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: const [
-                            Icon(
-                              Icons.headphones,
-                              color: Colors.white70,
-                              size: 22,
-                            ),
-                            SizedBox(width: 12),
-                            Icon(
-                              Icons.settings,
-                              color: Colors.white70,
-                              size: 22,
-                            ),
+                          children: [
+                            Text(isReady ? "Connected" : "Offline",
+                                style: TextStyle(color: isReady ? Colors.green : Colors.grey, fontSize: 12)),
+                            const SizedBox(width: 5),
+                            Icon(Icons.bluetooth, color: isReady ? Colors.green : Colors.grey),
                           ],
                         ),
                       ],
                     ),
                   ),
 
-                  SizedBox(height: 41),
-
-                  // Card container
+                  // Form Container
                   Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 30),
+                    margin: const EdgeInsets.all(20),
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: const Color(0xFF1C2026),
@@ -115,224 +132,75 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Back arrow + title
-                        Row(
-                          children: [
-                            GestureDetector(
-                              onTap: () => Navigator.pop(context),
-                              child: const Icon(
-                                Icons.arrow_back,
-                                color: Colors.white,
-                                size: 20,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: const Text(
-                                "Select Opening Players",
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontFamily: 'Poppins',
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                        _buildLabel("Striker"),
+                        _buildDropdown("Select Striker", selectedStriker, players, (val) => setState(() => selectedStriker = val)),
+
                         const SizedBox(height: 20),
-                        Padding(
-                          padding: const EdgeInsets.all(15),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              // Striker
-                              const Text(
-                                "Striker",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
+
+                        _buildLabel("Non-Striker"),
+                        _buildDropdown("Select Non-Striker", selectedNonStriker, players, (val) => setState(() => selectedNonStriker = val)),
+
+                        const SizedBox(height: 20),
+
+                        _buildLabel("Bowler"),
+                        _buildDropdown("Select Bowler", selectedBowler, bowlers, (val) => setState(() => selectedBowler = val)),
+
+                        const SizedBox(height: 40),
+
+                        Center(
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF0E7292),
+                              padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                            ),
+                            onPressed: () async {
+                              // 1. Validation
+                              if (selectedStriker == null || selectedNonStriker == null || selectedBowler == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select all players")));
+                                return;
+                              }
+
+                              // 2. BLE Commands (Only runs if Bluetooth is ready)
+                              if (isReady) {
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Syncing Display...")));
+                                try {
+                                  // Send initialization commands
+                                  await Future.wait([
+                                    send("TEXT 3 2 1 255 255 200 10:10"),
+                                    send("TEXT 5 30 2 255 0 255 SCR:"),
+                                    send("TEXT 50 30 2 255 255 255 0"),
+                                    send("TEXT 10 60 1 0 255 0 ${selectedBowler?.toUpperCase()}:"),
+                                    send("TEXT 8 74 1 200 255 255 ${selectedStriker?.toUpperCase()}:"),
+                                    send("TEXT 8 84 1 200 255 255 ${selectedNonStriker?.toUpperCase()}:"),
+                                  ]);
+                                } catch (e) {
+                                  debugPrint("Error sending BLE commands: $e");
+                                }
+                              }
+
+                              // 3. Prepare Logic Data
+                              final logic = ScoreCardLogic();
+                              logic.batsman1 = {'name': selectedStriker!, 'runs': 0, 'balls': 0, 'fours': 0, 'sixes': 0, 'sr': 0.0};
+                              logic.batsman2 = {'name': selectedNonStriker!, 'runs': 0, 'balls': 0, 'fours': 0, 'sixes': 0, 'sr': 0.0};
+                              logic.currentBowler = {'name': selectedBowler!, 'overs': 0.0, 'runs': 0, 'wickets': 0, 'er': 0.0};
+                              logic.strikerIndex = 0;
+
+                              // 4. Navigate to ScoreCard
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  // NOTE: If ScoreCardPage needs to update the display later,
+                                  // you might need to pass 'widget.device' to it as well!
+                                  builder: (context) => ScoreCardPage(objectBoxDB: objectBoxDB, logic: logic),
                                 ),
-                              ),
-                              const SizedBox(height: 15),
-                              _buildDropdown(
-                                hint: "Select Striker",
-                                value: selectedStriker,
-                                items: players,
-                                onChanged: (value) {
-                                  setState(() => selectedStriker = value);
-                                },
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Non-Striker
-                              const Text(
-                                "Non-Striker",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-                              _buildDropdown(
-                                hint: "Select Non-Striker",
-                                value: selectedNonStriker,
-                                items: players,
-                                onChanged: (value) {
-                                  setState(() => selectedNonStriker = value);
-                                },
-                              ),
-
-                              const SizedBox(height: 20),
-
-                              // Bowler
-                              const Text(
-                                "Bowler",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              const SizedBox(height: 15),
-                              _buildDropdown(
-                                hint: "Choose Bowler",
-                                value: selectedBowler,
-                                items: bowlers,
-                                onChanged: (value) {
-                                  setState(() => selectedBowler = value);
-                                },
-                              ),
-
-                              const SizedBox(height: 57),
-
-                              // Proceed Button
-                              Center(
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF0E7292),
-                                    minimumSize: const Size(50, 50),
-                                    maximumSize: const Size(150, 50),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 20,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(30),
-                                    ),
-                                  ),
-                                  onPressed: () {
-                                    // Validation
-                                    if (selectedStriker == null ||
-                                        selectedNonStriker == null ||
-                                        selectedBowler == null) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              "Please select all players!"),
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    if (selectedStriker == selectedNonStriker) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                          content: Text(
-                                              "Striker and Non-Striker must be different!"),
-                                          backgroundColor: Colors.redAccent,
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    // Create new ScoreCardLogic instance with selected players
-                                    final logic = ScoreCardLogic();
-
-                                    // Initialize batsmen
-                                    logic.batsman1 = {
-                                      'name': selectedStriker!,
-                                      'runs': 0,
-                                      'balls': 0,
-                                      'fours': 0,
-                                      'sixes': 0,
-                                      'sr': 0.0,
-                                    };
-
-                                    logic.batsman2 = {
-                                      'name': selectedNonStriker!,
-                                      'runs': 0,
-                                      'balls': 0,
-                                      'fours': 0,
-                                      'sixes': 0,
-                                      'sr': 0.0,
-                                    };
-
-                                    // Initialize bowler
-                                    logic.currentBowler = {
-                                      'name': selectedBowler!,
-                                      'overs': 0.0,
-                                      'runs': 0,
-                                      'wickets': 0,
-                                      'er': 0.0,
-                                    };
-
-                                    // Striker is batsman1
-                                    logic.strikerIndex = 0;
-
-                                    // Navigate to ScoreCard with initialized logic
-                                    // Import main.dart to access objectBoxDB
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) =>
-                                            ScoreCardPage(
-                                              objectBoxDB: objectBoxDB,
-                                              logic: logic,
-                                            ),
-                                      ),
-                                    );
-                                  },
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    crossAxisAlignment:
-                                    CrossAxisAlignment.center,
-                                    children: [
-                                      Flexible(
-                                        fit: FlexFit.loose,
-                                        child: const Text(
-                                          "Proceed",
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.white,
-                                          ),
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      const Icon(
-                                        Icons.arrow_forward,
-                                        color: Colors.white,
-                                        size: 20,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                              SizedBox(height: 50),
-                            ],
+                              );
+                            },
+                            child: const Text("Proceed", style: TextStyle(color: Colors.white, fontSize: 16)),
                           ),
                         ),
                       ],
                     ),
                   ),
-
-                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -342,46 +210,23 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
     );
   }
 
-  Widget _buildDropdown({
-    required String hint,
-    required String? value,
-    required List<String> items,
-    required ValueChanged<String?> onChanged,
-  }) {
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+    );
+  }
+
+  Widget _buildDropdown(String hint, String? value, List<String> items, ValueChanged<String?> onChanged) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 13, vertical: 4),
-      height: 44.23,
-      decoration: BoxDecoration(
-        color: Color(0xFFD9D9D9),
-        borderRadius: BorderRadius.circular(10),
-      ),
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(8)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
-          dropdownColor: Color(0xFFD9D9D9),
-          borderRadius: BorderRadius.circular(20),
           value: value,
-          hint: Text(
-            hint,
-            style: const TextStyle(color: Color(0xFF9E9E9E), fontSize: 14),
-          ),
-          icon: const Icon(
-            Icons.arrow_drop_down,
-            color: Colors.white,
-            size: 20,
-          ),
+          hint: Text(hint),
           isExpanded: true,
-          isDense: true,
-          items: items
-              .map(
-                (player) => DropdownMenuItem<String>(
-              value: player,
-              child: Text(
-                player,
-                style: const TextStyle(color: Colors.black, fontSize: 14),
-              ),
-            ),
-          )
-              .toList(),
+          items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
           onChanged: onChanged,
         ),
       ),
