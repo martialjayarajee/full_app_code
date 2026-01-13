@@ -1,3 +1,4 @@
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:full_app_code/src/Screens/advanced.settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -653,7 +654,8 @@ Widget _buildNavItem({
                   backgroundColor: Color(0xFF00C4FF),
                 ),
               );
-              Navigator.push(context, MaterialPageRoute(builder: (context) => SelectPlayersPage()));
+             
+              Navigator.push(context, MaterialPageRoute(builder: (context) => SelectPlayersPage(device: null,)));
             }
           },
           child: Container(
