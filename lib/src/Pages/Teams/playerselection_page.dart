@@ -1,11 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:full_app_code/src/services/score_card_page.dart';
 import 'package:full_app_code/src/Providers/score_card_logic.dart';
 import 'package:full_app_code/main.dart';
 
 class SelectPlayersPage extends StatefulWidget {
+  final  BluetoothDevice device;
+
+  const SelectPlayersPage({
+    super.key,
+    required this.device,
+  });
+
+
   @override
   _SelectPlayersPageState createState() => _SelectPlayersPageState();
+
+
 }
 
 class _SelectPlayersPageState extends State<SelectPlayersPage> {

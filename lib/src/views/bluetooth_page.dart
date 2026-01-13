@@ -205,11 +205,13 @@ class _BluetoothPageState extends State<BluetoothPage>
         onPressed: () {
           // SAFETY CHECK: Ensure device is not null before navigating
           if (_connectedGameDevice != null) {
+
+            final device = _connectedGameDevice;
             Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => SelectPlayersPage(
-                  device: _connectedGameDevice!,
+                  device: device!,
                 ),
               ),
             );
