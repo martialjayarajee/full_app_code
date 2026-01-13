@@ -209,7 +209,7 @@ class _BluetoothPageState extends State<BluetoothPage>
               context,
               MaterialPageRoute(
                 builder: (context) => SelectPlayersPage(
-                  device: _connectedGameDevice!, // Safe to use '!' here because we checked '!= null' above
+                  device: _connectedGameDevice!,
                 ),
               ),
             );
