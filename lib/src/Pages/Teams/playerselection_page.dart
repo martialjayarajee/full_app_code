@@ -21,7 +21,7 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
   String? selectedBowler;
 
   List<String> players = [
-    'Virat Kohli', 'MS Dhoni', 'Rohit Sharma', 'KL Rahul', 'Hardik Pandya'
+    'Kohli', 'Dhoni', 'Rohit', 'Rahul', 'Hardik'
   ];
   List<String> bowlers = ['Starc', 'Bumrah', 'Shami'];
 

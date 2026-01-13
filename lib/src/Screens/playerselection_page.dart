@@ -5,6 +5,7 @@ import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:full_app_code/src/services/score_card_page.dart';
 import 'package:full_app_code/src/Providers/score_card_logic.dart';
 import 'package:full_app_code/main.dart';
+import 'package:full_app_code/src/views/bluetooth_page.dart';
 
 class SelectPlayersPage extends StatefulWidget {
   // 1. This variable accepts the device passed from BluetoothPage
@@ -23,6 +24,8 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
   String? selectedNonStriker;
   String? selectedBowler;
 
+  final bluetooth = BluetoothPage();
+
   // Sample data - You can replace this with real data later
   List<String> players = [
     'Virat Kohli', 'MS Dhoni', 'Rohit Sharma', 'KL Rahul', 'Hardik Pandya'
@@ -36,45 +39,45 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
   void initState() {
     super.initState();
     // Start searching for the writable service as soon as the page loads
-    _discoverServices();
+  //  _discoverServices();
   }
 
-  Future<void> _discoverServices() async {
-    // If no device was passed (e.g. came from TeamPage), stop here.
-    if (widget.device == null) return;
-
-    try {
-      // Discover services on the connected device
-      List<BluetoothService> services = await widget.device!.discoverServices();
-
-      for (var service in services) {
-        for (var characteristic in service.characteristics) {
-          // Look for a characteristic we can write to
-          if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
-            setState(() {
-              writeChar = characteristic;
-              isReady = true;
-            });
-            debugPrint("✅ Connected to Write Characteristic");
-            return;
-          }
-        }
-      }
-    } catch (e) {
-      debugPrint("❌ Error finding services: $e");
-    }
-  }
+  // Future<void> _discoverServices() async {
+  //   // If no device was passed (e.g. came from TeamPage), stop here.
+  //   if (widget.device == null) return;
+  //
+  //   try {
+  //     // Discover services on the connected device
+  //     List<BluetoothService> services = await widget.device!.discoverServices();
+  //
+  //     for (var service in services) {
+  //       for (var characteristic in service.characteristics) {
+  //         // Look for a characteristic we can write to
+  //         if (characteristic.properties.write || characteristic.properties.writeWithoutResponse) {
+  //           setState(() {
+  //             writeChar = characteristic;
+  //             isReady = true;
+  //           });
+  //           debugPrint("✅ Connected to Write Characteristic");
+  //           return;
+  //         }
+  //       }
+  //     }
+  //   } catch (e) {
+  //     debugPrint("❌ Error finding services: $e");
+  //   }
+  // }
 
   // Function to send commands to the BLE Device
-  Future<void> send(String cmd) async {
-    if (writeChar == null) return;
-    try {
-      await writeChar!.write(utf8.encode("$cmd\n"), withoutResponse: false);
-      debugPrint("Sent: $cmd");
-    } catch (e) {
-      debugPrint("Write Error: $e");
-    }
-  }
+  // Future<void> send(String cmd) async {
+  //   if (writeChar == null) return;
+  //   try {
+  //     await writeChar!.write(utf8.encode("$cmd\n"), withoutResponse: false);
+  //     debugPrint("Sent: $cmd");
+  //   } catch (e) {
+  //     debugPrint("Write Error: $e");
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -154,6 +157,7 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                             ),
                             onPressed: () async {
+
                               // 1. Validation
                               if (selectedStriker == null || selectedNonStriker == null || selectedBowler == null) {
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Please select all players")));
@@ -164,10 +168,10 @@ class _SelectPlayersPageState extends State<SelectPlayersPage> {
                               if (isReady) {
                                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Syncing Display...")));
                                 try {
+                                  final bluetooth = BluetoothService();
                                   // Send initialization commands
                                   await Future.wait([
-                                    send("TEXT 3 2 1 255 255 200 10:10"),
-                                    send("TEXT 5 30 2 255 0 255 SCR:"),
+                                  await bluetooth.send("TEXT 5 30 2 255 0 255 SCR:"),
                                     send("TEXT 50 30 2 255 255 255 0"),
                                     send("TEXT 10 60 1 0 255 0 ${selectedBowler?.toUpperCase()}:"),
                                     send("TEXT 8 74 1 200 255 255 ${selectedStriker?.toUpperCase()}:"),
