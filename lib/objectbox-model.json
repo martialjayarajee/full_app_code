@@ -1,0 +1,146 @@
+{
+  "_note1": "KEEP THIS FILE! Check it into a version control system (VCS) like git.",
+  "_note2": "ObjectBox manages crucial IDs for your object model. See docs for details.",
+  "_note3": "If you have VCS merge conflicts, you must resolve them according to ObjectBox docs.",
+  "entities": [
+    {
+      "id": "1:6877489737263573673",
+      "lastPropertyId": "11:1467976945630097273",
+      "name": "BattingStats",
+      "properties": [
+        {
+          "id": "1:5102488118071254901",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:9197799658361074978",
+          "name": "batID",
+          "type": 9
+        },
+        {
+          "id": "3:6932059736824306028",
+          "name": "inningsType",
+          "type": 9
+        },
+        {
+          "id": "4:2042546768178606896",
+          "name": "teamId",
+          "type": 9
+        },
+        {
+          "id": "5:6392699258919080936",
+          "name": "playerId",
+          "type": 9
+        },
+        {
+          "id": "6:9064547190407760190",
+          "name": "runs",
+          "type": 6
+        },
+        {
+          "id": "7:6906451465969281540",
+          "name": "ballsPlayed",
+          "type": 6
+        },
+        {
+          "id": "8:6988015229037000492",
+          "name": "fours",
+          "type": 6
+        },
+        {
+          "id": "9:7073053892015011870",
+          "name": "sixes",
+          "type": 6
+        },
+        {
+          "id": "10:6208351790221096772",
+          "name": "dotBalls",
+          "type": 6
+        },
+        {
+          "id": "11:1467976945630097273",
+          "name": "strikeRate",
+          "type": 8
+        }
+      ],
+      "relations": []
+    },
+    {
+      "id": "2:3552183586018785394",
+      "lastPropertyId": "11:3012067541960380773",
+      "name": "BowlingStats",
+      "properties": [
+        {
+          "id": "1:3656948228772132877",
+          "name": "id",
+          "type": 6,
+          "flags": 1
+        },
+        {
+          "id": "2:366759854926635409",
+          "name": "bowlID",
+          "type": 9
+        },
+        {
+          "id": "3:6316401887683217313",
+          "name": "inningsType",
+          "type": 9
+        },
+        {
+          "id": "4:62528939362929624",
+          "name": "teamId",
+          "type": 9
+        },
+        {
+          "id": "5:3815260666571265413",
+          "name": "playerId",
+          "type": 9
+        },
+        {
+          "id": "6:5990287459761714060",
+          "name": "oversBowled",
+          "type": 8
+        },
+        {
+          "id": "7:1069581937176268449",
+          "name": "runsGiven",
+          "type": 6
+        },
+        {
+          "id": "8:6715775437910844696",
+          "name": "wicketsConceded",
+          "type": 6
+        },
+        {
+          "id": "9:2504546502487939545",
+          "name": "extras",
+          "type": 6
+        },
+        {
+          "id": "10:8047213814270774846",
+          "name": "maidens",
+          "type": 6
+        },
+        {
+          "id": "11:3012067541960380773",
+          "name": "economyRate",
+          "type": 8
+        }
+      ],
+      "relations": []
+    }
+  ],
+  "lastEntityId": "2:3552183586018785394",
+  "lastIndexId": "0:0",
+  "lastRelationId": "0:0",
+  "lastSequenceId": "0:0",
+  "modelVersion": 5,
+  "modelVersionParserMinimum": 5,
+  "retiredEntityUids": [],
+  "retiredIndexUids": [],
+  "retiredPropertyUids": [],
+  "retiredRelationUids": [],
+  "version": 1
+}
